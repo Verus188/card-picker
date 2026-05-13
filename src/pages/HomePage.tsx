@@ -48,6 +48,7 @@ export function HomePage() {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [copyCount, setCopyCount] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
+  const hasTriedInitialSyncRef = useRef(false);
   const trainingTableScrollRef = useRef<HTMLDivElement | null>(null);
   const {
     cards,
@@ -68,6 +69,13 @@ export function HomePage() {
   useEffect(() => {
     if (!isHydrated) void hydrate();
   }, [hydrate, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated || hasTriedInitialSyncRef.current) return;
+
+    hasTriedInitialSyncRef.current = true;
+    if (fileName) void syncFromFile();
+  }, [fileName, isHydrated, syncFromFile]);
 
   const orderedCards = useMemo(() => getOrderedCards(cards), [cards]);
   const trainingQueue = useMemo(() => getTrainingQueue(cards), [cards]);
