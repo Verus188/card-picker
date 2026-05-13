@@ -5,11 +5,13 @@ import { TrainingPage } from './pages/TrainingPage'
 import { antdTheme } from './styles/theme'
 import './App.css'
 
+const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined
+
 function App() {
   return (
     <ConfigProvider theme={antdTheme}>
       <AntdApp>
-        <BrowserRouter>
+        <BrowserRouter basename={routerBasename}>
           <Layout className="app-shell">
             <Routes>
               <Route element={<HomePage />} path="/" />
