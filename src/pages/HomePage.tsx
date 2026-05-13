@@ -25,7 +25,6 @@ import {
 } from "@ant-design/icons";
 import { type DragEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { StatusTag } from "../components/StatusTag";
 import { getOrderedCards, getTrainingQueue } from "../lib/srs";
 import { downloadMarkdownTemplate } from "../lib/template";
 import { useCardsStore } from "../store/useCardsStore";
@@ -77,10 +76,7 @@ export function HomePage() {
     1,
     Math.ceil(orderedCards.length / TRAINING_TABLE_PAGE_SIZE),
   );
-  const visibleTrainingTablePage = Math.min(
-    currentPage,
-    maxTrainingTablePage,
-  );
+  const visibleTrainingTablePage = Math.min(currentPage, maxTrainingTablePage);
   const paginatedOrderedCards = useMemo(() => {
     const startIndex =
       (visibleTrainingTablePage - 1) * TRAINING_TABLE_PAGE_SIZE;
@@ -164,27 +160,21 @@ export function HomePage() {
       dataIndex: "word",
       key: "word",
       render: (value: string) => <Text strong>{value}</Text>,
-      width: "22%",
+      width: "34%",
     },
     {
       title: "Перевод",
       dataIndex: "translation",
       key: "translation",
       render: (value: string) => value || <Text type="secondary">Пусто</Text>,
-      width: "30%",
-    },
-    {
-      title: "Статус",
-      key: "status",
-      render: (_: unknown, card: VocabularyCard) => <StatusTag card={card} />,
-      width: "14%",
+      width: "34%",
     },
     {
       title: "Повторить",
       key: "due",
       render: (_: unknown, card: VocabularyCard) =>
         card.progress.due || <Text type="secondary">Новая</Text>,
-      width: "14%",
+      width: "12%",
     },
     {
       title: "Интервал",
