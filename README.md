@@ -1,75 +1,98 @@
-# React + TypeScript + Vite
+# Markdown Word Trainer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React-приложение для изучения английских слов интервальным методом. Роль аккаунта выполняет локальный `.md` файл: приложение читает markdown-таблицу, показывает карточки для тренировки и записывает прогресс обратно в тот же файл через File System Access API.
 
-Currently, two official plugins are available:
+## Технологии
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React
+- TypeScript
+- Vite
+- React Router
+- Ant Design
+- Zustand
+- File System Access API
+- IndexedDB
+- Bun
 
-## React Compiler
+## Запуск
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bun install
+bun run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Откройте локальный адрес из терминала в Chromium-браузере: Chrome, Edge или Opera.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Сборка
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+bun run build
 ```
+
+## Формат markdown-файла
+
+В файле должна быть markdown-таблица. Обязательна только колонка с английским словом: `word`, `english`, `term`, `front`, `en` или `слово`.
+
+Пример:
+
+```md
+| word | translation |
+| ---- | ----------- |
+| apple | яблоко |
+| resilient | устойчивый |
+| ponder |  |
+```
+
+После тренировки приложение добавит или обновит служебные колонки:
+
+```md
+| word | translation | due | interval | ease | repetitions | lapses | lastReviewed |
+| ---- | ----------- | --- | -------- | ---- | ----------- | ------ | ------------ |
+| apple | яблоко | 2026-05-17 | 4 | 2.65 | 1 | 0 | 2026-05-13 |
+```
+
+Если перевода нет, обратная сторона карточки будет пустой. Если в строке нет английского слова, строка игнорируется. Если служебные поля отсутствуют или пустые, карточка считается новой.
+
+## Как работает файл
+
+1. На главной странице нажмите `Выбрать .md файл` или перетащите `.md` файл в drop-зону.
+2. При выборе через кнопку браузер покажет системный диалог выбора файла.
+3. Доступ к выбранному файлу сохраняется в IndexedDB.
+4. Кнопка `Синхронизировать` заново читает файл с диска.
+5. Перед стартом тренировки приложение также синхронизирует файл.
+6. После завершения тренировки прогресс записывается обратно в выбранный `.md`.
+
+Если браузер снова запросит разрешение на чтение или запись, подтвердите доступ. При отказе приложение покажет предупреждение и предложит выбрать файл заново или повторить действие.
+
+При перетаскивании приложение использует Chromium API `DataTransferItem.getAsFileSystemHandle()`. Если браузер отдаст только обычный `File`, приложение попросит выбрать файл через кнопку, потому что такой файл нельзя надежно записать обратно после тренировки.
+
+На главной странице также есть кнопка `Скачать шаблон`. Она скачивает пустой `.md` файл с таблицей:
+
+```md
+| word | translation |
+| ---- | ----------- |
+|  |  |
+```
+
+## Алгоритм повторения
+
+Используется упрощенный SM-2:
+
+- `Не помню`: интервал сбрасывается до 1 дня, ease уменьшается.
+- `Трудно`: интервал растет слабо, ease уменьшается.
+- `Хорошо`: стандартный рост интервала.
+- `Легко`: увеличенный рост интервала, ease повышается.
+
+На главной странице карточки отсортированы в том порядке, в котором они попадут в тренировку: сначала просроченные, затем новые, затем будущие.
+
+Рядом с кнопкой старта есть кнопка копирования. Она открывает окно с ползунком от 1 до 20 и копирует выбранное количество первых английских слов из текущей очереди тренировки markdown-списком с `-` перед каждым словом.
+
+## Режимы тренировки
+
+На главной странице можно выбрать один из трех режимов:
+
+- `Все английские слова`: текущий режим по умолчанию, на лицевой стороне английское слово, на обратной перевод.
+- `Рандомные слова`: для каждой карточки случайно выбирается направление: английский -> русский или русский -> английский.
+- `Все на русском`: на лицевой стороне перевод, на обратной английское слово.
+
+Выбранный режим сохраняется в `localStorage`. Если у карточки нет перевода, русская сторона будет пустой.
