@@ -4,10 +4,9 @@ import {
   Button,
   Card,
   Empty,
-  Flex,
   Modal,
+  Radio,
   Slider,
-  Segmented,
   Space,
   Statistic,
   Table,
@@ -15,13 +14,13 @@ import {
   Typography,
 } from 'antd'
 import {
+  CloseOutlined,
   CopyOutlined,
   DownloadOutlined,
   FileMarkdownOutlined,
   InboxOutlined,
   PlayCircleOutlined,
   ReloadOutlined,
-  SelectOutlined,
 } from '@ant-design/icons'
 import { type DragEvent, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -44,7 +43,7 @@ export function HomePage() {
   const [copyCount, setCopyCount] = useState(5)
   const {
     cards,
-    chooseFile,
+    clearFile,
     dropFile,
     error,
     fileName,
@@ -65,6 +64,7 @@ export function HomePage() {
   const orderedCards = useMemo(() => getOrderedCards(cards), [cards])
   const trainingQueue = useMemo(() => getTrainingQueue(cards), [cards])
   const copyLimit = Math.min(copyCount, trainingQueue.length)
+  const hasOpenFile = Boolean(fileName)
 
   const handleDragEnter = (event: DragEvent<HTMLElement>) => {
     event.preventDefault()
@@ -92,6 +92,12 @@ export function HomePage() {
     setIsDraggingFile(false)
     setNotice(null)
     await dropFile(event.dataTransfer)
+  }
+
+  const closeFile = async () => {
+    setNotice(null)
+    setIsCopyModalOpen(false)
+    await clearFile()
   }
 
   const startTraining = async () => {
@@ -130,39 +136,45 @@ export function HomePage() {
       dataIndex: 'word',
       key: 'word',
       render: (value: string) => <Text strong>{value}</Text>,
+      width: '22%',
     },
     {
       title: 'Перевод',
       dataIndex: 'translation',
       key: 'translation',
       render: (value: string) => value || <Text type="secondary">Пусто</Text>,
+      width: '30%',
     },
     {
       title: 'Статус',
       key: 'status',
       render: (_: unknown, card: VocabularyCard) => <StatusTag card={card} />,
+      width: '14%',
     },
     {
       title: 'Повторить',
       key: 'due',
       render: (_: unknown, card: VocabularyCard) =>
         card.progress.due || <Text type="secondary">Новая</Text>,
+      width: '14%',
     },
     {
       title: 'Интервал',
       key: 'interval',
       render: (_: unknown, card: VocabularyCard) =>
         card.progress.interval ? `${card.progress.interval} дн.` : '0 дн.',
+      width: '10%',
     },
     {
       title: 'Повторы',
       key: 'repetitions',
       render: (_: unknown, card: VocabularyCard) => card.progress.repetitions ?? 0,
+      width: '10%',
     },
   ]
 
   return (
-    <main className="page">
+    <main className="page home-page">
       <section className="page-header">
         <div>
           <Text className="eyebrow">Markdown vocabulary</Text>
@@ -173,15 +185,15 @@ export function HomePage() {
             Скачать шаблон
           </Button>
           <Button
-            icon={<SelectOutlined />}
-            loading={isLoading}
-            onClick={chooseFile}
-            type="primary"
+            danger
+            disabled={!hasOpenFile || isLoading}
+            icon={<CloseOutlined />}
+            onClick={closeFile}
           >
-            Выбрать .md файл
+            Закрыть файл
           </Button>
           <Button
-            disabled={!fileName}
+            disabled={!hasOpenFile}
             icon={<ReloadOutlined />}
             loading={isLoading}
             onClick={syncFromFile}
@@ -191,96 +203,100 @@ export function HomePage() {
         </Space>
       </section>
 
-      {error ? <Alert message={error} showIcon type="warning" /> : null}
-      {notice ? <Alert message={notice} showIcon type="info" /> : null}
-
-      <section
-        className={`file-drop-zone ${isDraggingFile ? 'is-active' : ''}`}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-      >
-        <InboxOutlined className="file-drop-zone-icon" />
-        <div>
-          <Text strong>Перетащите сюда markdown-файл</Text>
-          <br />
-          <Text type="secondary">
-            Файл будет выбран, сохранен в IndexedDB и сразу синхронизирован
-          </Text>
-        </div>
-      </section>
-
-      <Card className="training-settings-card" title="Настройка тренировки">
-        <Segmented
-          block
-          onChange={(value) => setTrainingMode(value as TrainingMode)}
-          options={[
-            { label: 'Все английские слова', value: 'english' },
-            { label: 'Рандомные слова', value: 'random' },
-            { label: 'Все на русском', value: 'russian' },
-          ]}
-          value={trainingMode}
-        />
-      </Card>
-
-      <section className="dashboard-grid">
-        <Card>
-          <Statistic
-            prefix={<FileMarkdownOutlined />}
-            title="Выбранный файл"
-            value={fileName ?? 'Не выбран'}
-          />
-          <Text type="secondary">Последняя синхронизация: {formatSyncedAt(lastSyncedAt)}</Text>
-        </Card>
-        <Card>
-          <Statistic title="Карточек в файле" value={cards.length} />
-          <Text type="secondary">Строки без английского слова игнорируются</Text>
-        </Card>
-        <Card>
-          <Statistic title="В текущей тренировке" value={trainingQueue.length} />
-          <Text type="secondary">Новые и просроченные карточки</Text>
-        </Card>
-      </section>
-
-      <Card
-        title="Порядок тренировки"
-        extra={
-          <Space>
-            <Tooltip title="Скопировать первые слова тренировки">
+      <section className="home-workspace">
+        <Card
+          className="training-table-card"
+          extra={
+            <Space wrap>
+              <Tooltip title="Скопировать первые слова тренировки">
+                <Button
+                  aria-label="Скопировать первые слова тренировки"
+                  disabled={trainingQueue.length === 0}
+                  icon={<CopyOutlined />}
+                  onClick={() => setIsCopyModalOpen(true)}
+                />
+              </Tooltip>
               <Button
-                aria-label="Скопировать первые слова тренировки"
-                disabled={trainingQueue.length === 0}
-                icon={<CopyOutlined />}
-                onClick={() => setIsCopyModalOpen(true)}
-              />
-            </Tooltip>
-            <Button
-              disabled={!fileName || trainingQueue.length === 0}
-              icon={<PlayCircleOutlined />}
-              loading={isLoading}
-              onClick={startTraining}
-              type="primary"
+                disabled={!fileName || trainingQueue.length === 0}
+                icon={<PlayCircleOutlined />}
+                loading={isLoading}
+                onClick={startTraining}
+                type="primary"
+              >
+                Начать тренировку
+              </Button>
+            </Space>
+          }
+          title="Порядок тренировки"
+        >
+          {hasOpenFile ? (
+            <Table
+              columns={columns}
+              dataSource={orderedCards}
+              locale={{ emptyText: <Empty description="В файле нет карточек" /> }}
+              pagination={{ pageSize: 30, showSizeChanger: false }}
+              rowKey="id"
+              size="small"
+              tableLayout="fixed"
+            />
+          ) : (
+            <section
+              className={`file-drop-zone training-table-drop-zone ${isDraggingFile ? 'is-active' : ''}`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
             >
-              Начать тренировку
-            </Button>
-          </Space>
-        }
-      >
-        {orderedCards.length > 0 ? (
-          <Table
-            columns={columns}
-            dataSource={orderedCards}
-            pagination={{ pageSize: 10, hideOnSinglePage: true }}
-            rowKey="id"
-            scroll={{ x: 760 }}
-          />
-        ) : (
-          <Flex justify="center">
-            <Empty description="Выберите markdown-файл с таблицей слов" />
-          </Flex>
-        )}
-      </Card>
+              <InboxOutlined className="file-drop-zone-icon" />
+              <div>
+                <Text strong>Перетащите сюда markdown-файл</Text>
+                <br />
+                <Text type="secondary">
+                  Файл будет выбран, сохранен в IndexedDB и сразу синхронизирован
+                </Text>
+              </div>
+            </section>
+          )}
+        </Card>
+
+        <section className="home-side-panel">
+          {error ? <Alert message={error} showIcon type="warning" /> : null}
+          {notice ? <Alert message={notice} showIcon type="info" /> : null}
+
+          <Card className="training-settings-card" title="Настройка тренировки">
+            <Radio.Group
+              className="training-mode-radio-group"
+              onChange={(event) => setTrainingMode(event.target.value as TrainingMode)}
+              value={trainingMode}
+            >
+              <Space direction="vertical" size={10}>
+                <Radio value="english">Все английские слова</Radio>
+                <Radio value="random">Рандомные слова</Radio>
+                <Radio value="russian">Все на русском</Radio>
+              </Space>
+            </Radio.Group>
+          </Card>
+
+          <section className="dashboard-grid">
+            <Card>
+              <Statistic
+                prefix={<FileMarkdownOutlined />}
+                title="Выбранный файл"
+                value={fileName ?? 'Не выбран'}
+              />
+              <Text type="secondary">Последняя синхронизация: {formatSyncedAt(lastSyncedAt)}</Text>
+            </Card>
+            <Card>
+              <Statistic title="Карточек в файле" value={cards.length} />
+              <Text type="secondary">Строки без английского слова игнорируются</Text>
+            </Card>
+            <Card>
+              <Statistic title="В текущей тренировке" value={trainingQueue.length} />
+              <Text type="secondary">Новые и просроченные карточки</Text>
+            </Card>
+          </section>
+        </section>
+      </section>
 
       <Modal
         footer={null}

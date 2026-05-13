@@ -6,9 +6,17 @@
 }
 
 .page {
-  width: min(1180px, calc(100% - 32px));
+  width: 100%;
   margin: 0 auto;
-  padding: 32px 0 48px;
+  padding: 32px 24px 48px;
+}
+
+.home-page {
+  display: flex;
+  height: 100svh;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 24px;
 }
 
 .page-header {
@@ -32,6 +40,107 @@
   font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+.home-workspace {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+}
+
+.training-table-card,
+.home-side-panel {
+  min-height: 0;
+}
+
+.training-table-card {
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.training-table-card > .ant-card-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.training-table-card .ant-table-wrapper,
+.training-table-card .ant-spin-nested-loading,
+.training-table-card .ant-spin-container {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.training-table-card .ant-table-wrapper,
+.training-table-card .ant-table,
+.training-table-card .ant-table-container,
+.training-table-card .ant-table-content,
+.training-table-card table {
+  width: 100%;
+  max-width: 100%;
+}
+
+.training-table-card .ant-table {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.training-table-card .ant-table-container {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.training-table-card .ant-table-thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.training-table-card .ant-table-cell {
+  padding-block: 8px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: normal;
+}
+
+.training-table-card .ant-pagination {
+  flex: 0 0 auto;
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.empty-table-state {
+  height: 100%;
+  min-height: 220px;
+}
+
+.home-side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.home-side-panel .dashboard-grid {
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 0;
 }
 
 .dashboard-grid {
@@ -68,8 +177,26 @@
   font-size: 30px;
 }
 
+.training-table-drop-zone {
+  justify-content: center;
+  flex: 1;
+  margin: 0;
+}
+
 .training-settings-card {
   margin: 16px 0;
+}
+
+.home-side-panel .training-settings-card {
+  margin: 0;
+}
+
+.training-mode-radio-group {
+  width: 100%;
+}
+
+.training-mode-radio-group .ant-space {
+  width: 100%;
 }
 
 .copy-words-modal {
@@ -182,8 +309,11 @@
 
 @media (max-width: 860px) {
   .page {
-    width: min(100% - 24px, 1180px);
     padding-top: 20px;
+  }
+
+  .home-page {
+    padding-bottom: 20px;
   }
 
   .page-header,
@@ -194,6 +324,15 @@
 
   .page-header h1.ant-typography {
     font-size: 32px;
+  }
+
+  .home-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(180px, 0.8fr);
+  }
+
+  .home-side-panel {
+    overflow: auto;
   }
 
   .dashboard-grid {

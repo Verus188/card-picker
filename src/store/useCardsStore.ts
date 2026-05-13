@@ -191,15 +191,25 @@ export const useCardsStore = create<CardsState>((set, get) => ({
   },
 
   clearFile: async () => {
-    await clearFileHandle()
-    set({
-      cards: [],
-      error: null,
-      fileHandle: null,
-      fileName: null,
-      lastSyncedAt: null,
-      parsedMarkdown: null,
-    })
+    set({ error: null, isLoading: true })
+
+    try {
+      await clearFileHandle()
+      set({
+        cards: [],
+        error: null,
+        fileHandle: null,
+        fileName: null,
+        isLoading: false,
+        lastSyncedAt: null,
+        parsedMarkdown: null,
+      })
+    } catch (error) {
+      set({
+        error: toUserFriendlyFileError(error),
+        isLoading: false,
+      })
+    }
   },
 
   setTrainingMode: (trainingMode) => {
