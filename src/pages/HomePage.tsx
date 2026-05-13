@@ -5,6 +5,7 @@ import {
   Card,
   Empty,
   Modal,
+  Pagination,
   Radio,
   Slider,
   Space,
@@ -12,7 +13,7 @@ import {
   Table,
   Tooltip,
   Typography,
-} from 'antd'
+} from "antd";
 import {
   CloseOutlined,
   CopyOutlined,
@@ -21,26 +22,33 @@ import {
   InboxOutlined,
   PlayCircleOutlined,
   ReloadOutlined,
-} from '@ant-design/icons'
-import { type DragEvent, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { StatusTag } from '../components/StatusTag'
-import { getOrderedCards, getTrainingQueue } from '../lib/srs'
-import { downloadMarkdownTemplate } from '../lib/template'
-import { useCardsStore } from '../store/useCardsStore'
-import type { TrainingMode, VocabularyCard } from '../types/cards'
+} from "@ant-design/icons";
+import { type DragEvent, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { StatusTag } from "../components/StatusTag";
+import { getOrderedCards, getTrainingQueue } from "../lib/srs";
+import { downloadMarkdownTemplate } from "../lib/template";
+import { useCardsStore } from "../store/useCardsStore";
+import type { TrainingMode, VocabularyCard } from "../types/cards";
 
-const { Text, Title } = Typography
+const { Text, Title } = Typography;
+const TRAINING_TABLE_PAGE_SIZE = 30;
 
 const formatSyncedAt = (value: string | null) =>
-  value ? new Intl.DateTimeFormat('ru', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : 'Пока нет'
+  value
+    ? new Intl.DateTimeFormat("ru", {
+        dateStyle: "short",
+        timeStyle: "short",
+      }).format(new Date(value))
+    : "Пока нет";
 
 export function HomePage() {
-  const navigate = useNavigate()
-  const { message } = AntdApp.useApp()
-  const [notice, setNotice] = useState<string | null>(null)
-  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false)
-  const [copyCount, setCopyCount] = useState(5)
+  const navigate = useNavigate();
+  const { message } = AntdApp.useApp();
+  const [notice, setNotice] = useState<string | null>(null);
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const [copyCount, setCopyCount] = useState(5);
+  const [currentPage, setCurrentPage] = useState(1);
   const {
     cards,
     clearFile,
@@ -54,124 +62,145 @@ export function HomePage() {
     setTrainingMode,
     syncFromFile,
     trainingMode,
-  } = useCardsStore()
-  const [isDraggingFile, setIsDraggingFile] = useState(false)
+  } = useCardsStore();
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   useEffect(() => {
-    if (!isHydrated) void hydrate()
-  }, [hydrate, isHydrated])
+    if (!isHydrated) void hydrate();
+  }, [hydrate, isHydrated]);
 
-  const orderedCards = useMemo(() => getOrderedCards(cards), [cards])
-  const trainingQueue = useMemo(() => getTrainingQueue(cards), [cards])
-  const copyLimit = Math.min(copyCount, trainingQueue.length)
-  const hasOpenFile = Boolean(fileName)
+  const orderedCards = useMemo(() => getOrderedCards(cards), [cards]);
+  const trainingQueue = useMemo(() => getTrainingQueue(cards), [cards]);
+  const copyLimit = Math.min(copyCount, trainingQueue.length);
+  const hasOpenFile = Boolean(fileName);
+  const maxTrainingTablePage = Math.max(
+    1,
+    Math.ceil(orderedCards.length / TRAINING_TABLE_PAGE_SIZE),
+  );
+  const visibleTrainingTablePage = Math.min(
+    currentPage,
+    maxTrainingTablePage,
+  );
+  const paginatedOrderedCards = useMemo(() => {
+    const startIndex =
+      (visibleTrainingTablePage - 1) * TRAINING_TABLE_PAGE_SIZE;
+    return orderedCards.slice(
+      startIndex,
+      startIndex + TRAINING_TABLE_PAGE_SIZE,
+    );
+  }, [orderedCards, visibleTrainingTablePage]);
 
   const handleDragEnter = (event: DragEvent<HTMLElement>) => {
-    event.preventDefault()
-    setIsDraggingFile(true)
-  }
+    event.preventDefault();
+    setIsDraggingFile(true);
+  };
 
   const handleDragLeave = (event: DragEvent<HTMLElement>) => {
     if (
       event.relatedTarget instanceof Node &&
       event.currentTarget.contains(event.relatedTarget)
     ) {
-      return
+      return;
     }
 
-    setIsDraggingFile(false)
-  }
+    setIsDraggingFile(false);
+  };
 
   const handleDragOver = (event: DragEvent<HTMLElement>) => {
-    event.preventDefault()
-    event.dataTransfer.dropEffect = 'copy'
-  }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  };
 
   const handleDrop = async (event: DragEvent<HTMLElement>) => {
-    event.preventDefault()
-    setIsDraggingFile(false)
-    setNotice(null)
-    await dropFile(event.dataTransfer)
-  }
+    event.preventDefault();
+    setIsDraggingFile(false);
+    setNotice(null);
+    setCurrentPage(1);
+    await dropFile(event.dataTransfer);
+  };
 
   const closeFile = async () => {
-    setNotice(null)
-    setIsCopyModalOpen(false)
-    await clearFile()
-  }
+    setNotice(null);
+    setIsCopyModalOpen(false);
+    setCurrentPage(1);
+    await clearFile();
+  };
 
   const startTraining = async () => {
-    setNotice(null)
-    await syncFromFile()
+    setNotice(null);
+    await syncFromFile();
 
-    const queue = getTrainingQueue(useCardsStore.getState().cards)
+    const queue = getTrainingQueue(useCardsStore.getState().cards);
     if (queue.length === 0) {
-      setNotice('На сегодня нет карточек для тренировки.')
-      return
+      setNotice("На сегодня нет карточек для тренировки.");
+      return;
     }
 
-    navigate('/training')
-  }
+    navigate("/training");
+  };
 
   const copyTrainingWords = async () => {
-    const words = trainingQueue.slice(0, copyLimit).map((card) => `- ${card.word}`)
+    const words = trainingQueue
+      .slice(0, copyLimit)
+      .map((card) => `- ${card.word}`);
 
     if (words.length === 0) {
-      message.warning('В текущей тренировке нет слов для копирования.')
-      return
+      message.warning("В текущей тренировке нет слов для копирования.");
+      return;
     }
 
     try {
-      await navigator.clipboard.writeText(words.join('\n'))
-      message.success(`Скопировано слов: ${words.length}`)
-      setIsCopyModalOpen(false)
+      await navigator.clipboard.writeText(words.join("\n"));
+      message.success(`Скопировано слов: ${words.length}`);
+      setIsCopyModalOpen(false);
     } catch {
-      message.error('Не удалось скопировать слова в буфер обмена.')
+      message.error("Не удалось скопировать слова в буфер обмена.");
     }
-  }
+  };
 
   const columns = [
     {
-      title: 'Слово',
-      dataIndex: 'word',
-      key: 'word',
+      title: "Слово",
+      dataIndex: "word",
+      key: "word",
       render: (value: string) => <Text strong>{value}</Text>,
-      width: '22%',
+      width: "22%",
     },
     {
-      title: 'Перевод',
-      dataIndex: 'translation',
-      key: 'translation',
+      title: "Перевод",
+      dataIndex: "translation",
+      key: "translation",
       render: (value: string) => value || <Text type="secondary">Пусто</Text>,
-      width: '30%',
+      width: "30%",
     },
     {
-      title: 'Статус',
-      key: 'status',
+      title: "Статус",
+      key: "status",
       render: (_: unknown, card: VocabularyCard) => <StatusTag card={card} />,
-      width: '14%',
+      width: "14%",
     },
     {
-      title: 'Повторить',
-      key: 'due',
+      title: "Повторить",
+      key: "due",
       render: (_: unknown, card: VocabularyCard) =>
         card.progress.due || <Text type="secondary">Новая</Text>,
-      width: '14%',
+      width: "14%",
     },
     {
-      title: 'Интервал',
-      key: 'interval',
+      title: "Интервал",
+      key: "interval",
       render: (_: unknown, card: VocabularyCard) =>
-        card.progress.interval ? `${card.progress.interval} дн.` : '0 дн.',
-      width: '10%',
+        card.progress.interval ? `${card.progress.interval} дн.` : "0 дн.",
+      width: "10%",
     },
     {
-      title: 'Повторы',
-      key: 'repetitions',
-      render: (_: unknown, card: VocabularyCard) => card.progress.repetitions ?? 0,
-      width: '10%',
+      title: "Повторы",
+      key: "repetitions",
+      render: (_: unknown, card: VocabularyCard) =>
+        card.progress.repetitions ?? 0,
+      width: "10%",
     },
-  ]
+  ];
 
   return (
     <main className="page home-page">
@@ -181,7 +210,10 @@ export function HomePage() {
           <Title level={1}>Тренировка английских слов</Title>
         </div>
         <Space wrap>
-          <Button icon={<DownloadOutlined />} onClick={downloadMarkdownTemplate}>
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={downloadMarkdownTemplate}
+          >
             Скачать шаблон
           </Button>
           <Button
@@ -230,18 +262,34 @@ export function HomePage() {
           title="Порядок тренировки"
         >
           {hasOpenFile ? (
-            <Table
-              columns={columns}
-              dataSource={orderedCards}
-              locale={{ emptyText: <Empty description="В файле нет карточек" /> }}
-              pagination={{ pageSize: 30, showSizeChanger: false }}
-              rowKey="id"
-              size="small"
-              tableLayout="fixed"
-            />
+            <>
+              <div className="training-table-scroll">
+                <Table
+                  columns={columns}
+                  dataSource={paginatedOrderedCards}
+                  locale={{
+                    emptyText: <Empty description="В файле нет карточек" />,
+                  }}
+                  pagination={false}
+                  rowKey="id"
+                  size="small"
+                  tableLayout="fixed"
+                />
+              </div>
+              {orderedCards.length > 0 ? (
+                <Pagination
+                  className="training-table-pagination"
+                  current={visibleTrainingTablePage}
+                  onChange={setCurrentPage}
+                  pageSize={TRAINING_TABLE_PAGE_SIZE}
+                  showSizeChanger={false}
+                  total={orderedCards.length}
+                />
+              ) : null}
+            </>
           ) : (
             <section
-              className={`file-drop-zone training-table-drop-zone ${isDraggingFile ? 'is-active' : ''}`}
+              className={`file-drop-zone training-table-drop-zone ${isDraggingFile ? "is-active" : ""}`}
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
               onDragOver={handleDragOver}
@@ -252,7 +300,8 @@ export function HomePage() {
                 <Text strong>Перетащите сюда markdown-файл</Text>
                 <br />
                 <Text type="secondary">
-                  Файл будет выбран, сохранен в IndexedDB и сразу синхронизирован
+                  Файл будет выбран, сохранен в IndexedDB и сразу
+                  синхронизирован
                 </Text>
               </div>
             </section>
@@ -266,7 +315,9 @@ export function HomePage() {
           <Card className="training-settings-card" title="Настройка тренировки">
             <Radio.Group
               className="training-mode-radio-group"
-              onChange={(event) => setTrainingMode(event.target.value as TrainingMode)}
+              onChange={(event) =>
+                setTrainingMode(event.target.value as TrainingMode)
+              }
               value={trainingMode}
             >
               <Space direction="vertical" size={10}>
@@ -282,16 +333,23 @@ export function HomePage() {
               <Statistic
                 prefix={<FileMarkdownOutlined />}
                 title="Выбранный файл"
-                value={fileName ?? 'Не выбран'}
+                value={fileName ?? "Не выбран"}
               />
-              <Text type="secondary">Последняя синхронизация: {formatSyncedAt(lastSyncedAt)}</Text>
+              <Text type="secondary">
+                Последняя синхронизация: {formatSyncedAt(lastSyncedAt)}
+              </Text>
             </Card>
             <Card>
               <Statistic title="Карточек в файле" value={cards.length} />
-              <Text type="secondary">Строки без английского слова игнорируются</Text>
+              <Text type="secondary">
+                Строки без английского слова игнорируются
+              </Text>
             </Card>
             <Card>
-              <Statistic title="В текущей тренировке" value={trainingQueue.length} />
+              <Statistic
+                title="В текущей тренировке"
+                value={trainingQueue.length}
+              />
               <Text type="secondary">Новые и просроченные карточки</Text>
             </Card>
           </section>
@@ -308,11 +366,11 @@ export function HomePage() {
           <Text>Количество первых слов: {copyLimit}</Text>
           <Slider
             marks={{
-              1: '1',
-              5: '5',
-              10: '10',
-              15: '15',
-              20: '20',
+              1: "1",
+              5: "5",
+              10: "10",
+              15: "15",
+              20: "20",
             }}
             max={20}
             min={1}
@@ -320,11 +378,16 @@ export function HomePage() {
             step={1}
             value={copyCount}
           />
-          <Button block icon={<CopyOutlined />} onClick={copyTrainingWords} type="primary">
+          <Button
+            block
+            icon={<CopyOutlined />}
+            onClick={copyTrainingWords}
+            type="primary"
+          >
             Скопировать
           </Button>
         </div>
       </Modal>
     </main>
-  )
+  );
 }
