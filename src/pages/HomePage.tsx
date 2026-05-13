@@ -23,7 +23,7 @@ import {
   PlayCircleOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
-import { type DragEvent, useEffect, useMemo, useState } from "react";
+import { type DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getOrderedCards, getTrainingQueue } from "../lib/srs";
 import { downloadMarkdownTemplate } from "../lib/template";
@@ -48,6 +48,7 @@ export function HomePage() {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [copyCount, setCopyCount] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
+  const trainingTableScrollRef = useRef<HTMLDivElement | null>(null);
   const {
     cards,
     clearFile,
@@ -120,6 +121,11 @@ export function HomePage() {
     setIsCopyModalOpen(false);
     setCurrentPage(1);
     await clearFile();
+  };
+
+  const changeTrainingTablePage = (page: number) => {
+    setCurrentPage(page);
+    trainingTableScrollRef.current?.scrollTo({ top: 0, left: 0 });
   };
 
   const startTraining = async () => {
@@ -253,7 +259,7 @@ export function HomePage() {
         >
           {hasOpenFile ? (
             <>
-              <div className="training-table-scroll">
+              <div className="training-table-scroll" ref={trainingTableScrollRef}>
                 <Table
                   columns={columns}
                   dataSource={paginatedOrderedCards}
@@ -270,7 +276,7 @@ export function HomePage() {
                 <Pagination
                   className="training-table-pagination"
                   current={visibleTrainingTablePage}
-                  onChange={setCurrentPage}
+                  onChange={changeTrainingTablePage}
                   pageSize={TRAINING_TABLE_PAGE_SIZE}
                   showSizeChanger={false}
                   total={orderedCards.length}
