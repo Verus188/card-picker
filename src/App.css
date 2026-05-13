@@ -83,6 +83,8 @@
 .training-table-scroll {
   min-height: 0;
   flex: 1;
+  border-radius: 8px;
+  background: var(--color-card-light);
   overflow: auto;
   scrollbar-color: var(--color-accent) var(--color-card);
   scrollbar-width: thin;
@@ -250,6 +252,14 @@
 
 .training-table-card .ant-table-tbody > tr.ant-table-row:hover > td {
   background: rgba(251, 244, 234, 0.56);
+}
+
+.training-table-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 24px;
 }
 
 .training-table-pagination .ant-pagination-item a {

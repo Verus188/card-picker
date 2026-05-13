@@ -260,17 +260,20 @@ export function HomePage() {
           {hasOpenFile ? (
             <>
               <div className="training-table-scroll" ref={trainingTableScrollRef}>
-                <Table
-                  columns={columns}
-                  dataSource={paginatedOrderedCards}
-                  locale={{
-                    emptyText: <Empty description="В файле нет карточек" />,
-                  }}
-                  pagination={false}
-                  rowKey="id"
-                  size="small"
-                  tableLayout="fixed"
-                />
+                {orderedCards.length > 0 ? (
+                  <Table
+                    columns={columns}
+                    dataSource={paginatedOrderedCards}
+                    pagination={false}
+                    rowKey="id"
+                    size="small"
+                    tableLayout="fixed"
+                  />
+                ) : (
+                  <div className="training-table-empty-state">
+                    <Empty description="В файле нет карточек" />
+                  </div>
+                )}
               </div>
               {orderedCards.length > 0 ? (
                 <Pagination
