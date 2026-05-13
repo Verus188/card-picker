@@ -1,8 +1,6 @@
 .app-shell {
   min-height: 100svh;
-  background:
-    linear-gradient(135deg, rgba(253, 224, 184, 0.92), rgba(255, 250, 242, 0.96) 36%),
-    radial-gradient(circle at 90% 10%, rgba(252, 154, 100, 0.22), transparent 34%);
+  background: linear-gradient(180deg, #d2dad0 0%, #b4bfaf 52%, #929E91 100%);
 }
 
 .page {
@@ -146,9 +144,9 @@
   min-height: 96px;
   margin: 16px 0;
   padding: 22px 24px;
-  border: 2px dashed rgba(123, 81, 95, 0.36);
+  border: 2px dashed rgba(95, 61, 79, 0.34);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.58);
+  background: rgba(251, 244, 234, 0.5);
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
@@ -156,8 +154,8 @@
 }
 
 .file-drop-zone.is-active {
-  border-color: var(--color-orange);
-  background: rgba(253, 224, 184, 0.72);
+  border-color: var(--color-accent);
+  background: rgba(243, 231, 214, 0.72);
   transform: translateY(-1px);
 }
 
@@ -196,8 +194,67 @@
 }
 
 .ant-card {
+  background: var(--color-card);
   border-color: var(--color-border);
   box-shadow: var(--shadow-soft);
+  color: var(--color-text);
+}
+
+.ant-card .ant-card-head {
+  border-color: var(--color-border);
+  color: var(--color-accent);
+}
+
+.ant-card .ant-card-head-title,
+.ant-card .ant-statistic-title,
+.ant-card .ant-statistic-content,
+.ant-card .ant-typography {
+  color: inherit;
+}
+
+.training-table-card .ant-table {
+  background: transparent;
+  color: var(--color-text);
+}
+
+.training-table-card .ant-table-thead > tr > th {
+  background: rgba(251, 244, 234, 0.82);
+  color: var(--color-accent);
+}
+
+.training-table-card .ant-table-tbody > tr > td {
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+.training-table-card .ant-table-tbody > tr.ant-table-row:hover > td {
+  background: rgba(251, 244, 234, 0.4);
+}
+
+.training-table-pagination .ant-pagination-item a {
+  color: var(--color-text);
+}
+
+.training-table-pagination .ant-pagination-item-active {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.training-table-pagination .ant-pagination-item-active a {
+  color: var(--color-card-light);
+}
+
+.ant-btn[disabled],
+.ant-btn[disabled]:hover,
+.ant-pagination-disabled .ant-pagination-item-link,
+.ant-radio-wrapper-disabled {
+  color: var(--color-disabled);
+}
+
+.ant-btn[disabled],
+.ant-btn[disabled]:hover {
+  border-color: rgba(37, 48, 43, 0.12);
+  background: var(--color-disabled-bg);
 }
 
 .training-page {
@@ -262,15 +319,15 @@
   flex-direction: column;
   gap: 18px;
   padding: 32px;
-  border: 1px solid rgba(35, 19, 30, 0.16);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: linear-gradient(160deg, #ffffff, var(--color-cream));
+  background: linear-gradient(160deg, var(--color-card-light), var(--color-card));
   box-shadow: var(--shadow-soft);
   backface-visibility: hidden;
 }
 
 .study-card-back {
-  background: linear-gradient(160deg, #ffffff, rgba(193, 124, 117, 0.34));
+  background: linear-gradient(160deg, var(--color-card), rgba(95, 61, 79, 0.22));
   transform: rotateY(180deg);
 }
 
