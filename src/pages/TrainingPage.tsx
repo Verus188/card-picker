@@ -106,14 +106,25 @@ export function TrainingPage() {
   return (
     <main className="page training-page">
       <section className="training-topbar">
-        <Button icon={<ArrowLeftOutlined />} onClick={() => saveAndExit()} loading={isSaving}>
+        <Button
+          className="training-exit-button"
+          icon={<ArrowLeftOutlined />}
+          loading={isSaving}
+          onClick={() => saveAndExit()}
+        >
           Завершить тренировку
         </Button>
         <div className="training-counter">
           <Text strong>
             {completed} / {sessionCards.length}
           </Text>
-          <Progress percent={progress} showInfo={false} size="small" />
+          <Progress
+            percent={progress}
+            showInfo={false}
+            size="small"
+            strokeColor="var(--color-accent)"
+            trailColor="rgba(95, 61, 79, 0.16)"
+          />
         </div>
       </section>
 
@@ -151,6 +162,7 @@ export function TrainingPage() {
               disabled={!flipped || isSaving}
               key={button.rating}
               onClick={() => rateCard(button.rating)}
+              className={`rating-button rating-button-${button.rating}`}
               size="large"
               type={button.type}
             >
